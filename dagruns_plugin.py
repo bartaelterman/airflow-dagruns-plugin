@@ -6,7 +6,6 @@ from airflow.models import DagRun, DagModel, DAG
 from datetime import datetime
 from flask import Blueprint
 from flask_admin import BaseView, expose
-from flask_admin.base import MenuLink
 
 
 class DagRunsView(BaseView):
@@ -32,7 +31,7 @@ class DagRunsView(BaseView):
         return self.render("dag_runs.html", dag_runs=json.dumps(dag_runs))
 
 
-v = DagRunsView(category="DAG runs plugin", name="DAG runs")
+v = DagRunsView(name="DAG runs plugin")
 
 
 # Creating a flask blueprint to intergrate the templates and static folder
@@ -43,15 +42,8 @@ bp = Blueprint(
     static_url_path='/static/dagruns')
 
 
-ml = MenuLink(
-    category='DAG runs',
-    name='DAG runs',
-    url='http://vente-exclusive.com/')
-
-
 # Defining the plugin class
 class DagRunsPlugin(AirflowPlugin):
     name = "dagruns_plugin"
     admin_views = [v]
     flask_blueprints = [bp]
-    # menu_links = [ml]
