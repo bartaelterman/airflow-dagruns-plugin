@@ -8,7 +8,7 @@ from flask_admin import BaseView, expose
 
 def _get_end_date(dag_run):
     tasks = dag_run.get_task_instances()
-    if len(tasks > 0):
+    if len(tasks) > 0:
         # print(tasks)
         end_dates = [x.end_date if x.end_date else datetime.now() for x in tasks]
         return sorted(end_dates)[-1].isoformat() + 'Z'
