@@ -1,0 +1,23 @@
+.bar rect {
+    fill: #007A87;
+}
+
+    .bar rect.success {
+        fill: #008000;
+    }
+    .bar rect.failed {
+        fill: #FF0000;
+    }
+    .bar rect.running {
+        fill: #00FF00;
+    }
+
+svg {
+    background-color: white;
+}
+.x-axis path,
+.x-axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
