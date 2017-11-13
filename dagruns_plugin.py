@@ -1,11 +1,16 @@
 import json
-
 from airflow import settings
 from airflow.plugins_manager import AirflowPlugin
 from airflow.models import DagRun, DagModel, DAG
 from datetime import datetime
 from flask import Blueprint
 from flask_admin import BaseView, expose
+
+def _get_end_date(dag_run):
+    tasks = dag_run.get_task_instances()
+    # print(tasks)
+    end_dates = [x.end_date if x.end_date else datetime.now() for x in tasks]
+    return sorted(end_dates)[-1].isoformat() + 'Z'
 
 
 class DagRunsView(BaseView):
@@ -21,7 +26,7 @@ class DagRunsView(BaseView):
              {
                 'dagId': run.dag_id,
                 'startDate': run.start_date.isoformat('T') + 'Z',
-                'endDate': run.end_date.isoformat() + 'Z' if run.end_date else datetime.now().isoformat() + 'Z', # it turns out that the end date is never filled in
+                'endDate': _get_end_date(run),
                 'executionDate': run.execution_date.isoformat() + '.000Z',
                 'executionDateStr': run.execution_date.strftime("%Y-%m-%d %H:%M:%S"),
                 'schedule': 'unknown',  # TODO: how can we get the scheduled interval
