@@ -289,7 +289,21 @@ var dagChart = (function () {
         bars.append("rect")
             .attr("width", function(d) { return xScale(new Date(minStart.valueOf() + d.endDate.valueOf() - d.startDate.valueOf())); })
             .attr("height", 20)
-            .attr("class", function (d) {return d.state;});
+            .attr("class", function (d) {return d.state;})
+            .on("mouseover", function () {
+                d3.select(this).attr("fill-opacity", 0.4);
+            })
+            .on("mouseout", function () {
+                d3.select(this).attr("fill-opacity", 1);
+            })
+            .on("click", function (d) {
+                var rect = d3.select(this);
+
+                var url = '/admin/airflow/gantt?dag_id=' + d.dagId + '&execution_date=' + d.executionDateStr;
+                console.log(url)
+                window.location.href = url;
+            })
+        ;
 
 
         // Create DAG id labels
