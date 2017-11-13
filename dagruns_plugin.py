@@ -8,9 +8,11 @@ from flask_admin import BaseView, expose
 
 def _get_end_date(dag_run):
     tasks = dag_run.get_task_instances()
-    # print(tasks)
-    end_dates = [x.end_date if x.end_date else datetime.now() for x in tasks]
-    return sorted(end_dates)[-1].isoformat() + 'Z'
+    if len(tasks > 0):
+        # print(tasks)
+        end_dates = [x.end_date if x.end_date else datetime.now() for x in tasks]
+        return sorted(end_dates)[-1].isoformat() + 'Z'
+    return dag_run.start_date.isoformat('T') + 'Z'
 
 
 class DagRunsView(BaseView):
