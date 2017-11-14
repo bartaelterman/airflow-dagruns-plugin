@@ -4,7 +4,7 @@ import pprint
 from airflow import settings
 from airflow.plugins_manager import AirflowPlugin
 from airflow.models import DagRun, DagModel, DAG
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from flask import Blueprint
 from flask_admin import BaseView, expose
 
@@ -20,11 +20,12 @@ def _get_end_date(dag_run):
 class DagRunsView(BaseView):
     @expose('/')
     def test(self):
+        today = date.today()
+        first_day = today - timedelta(days=3)
         session = settings.Session()
         # this query should work for both postgres and mysql
         # Although it should be noted that for postgres you should be able to use a window function which is much cleaner
-        result = session.execute(
-            '''
+        query = '''
                 SELECT
                   dag_run.dag_id as dag_id
                   , dag_pickle.pickle as dag_pickle
@@ -60,8 +61,31 @@ class DagRunsView(BaseView):
 
                 WHERE dag_run.execution_date > :min_date
                 GROUP BY dag_run.dag_id, dag_pickle.pickle, dag_run.execution_date, dag_run.start_date, last_tasks.end_date, dag_run.state
-            ''',
-            {'min_date': '2017-05-01', 'today': '2017-11-13'}
+            '''
+
+        query2 = """
+        SET @row_number:=0;
+        SET @dag_run:='';
+        SELECT * FROM
+        (
+            SELECT @row_number:=CASE WHEN @dag_run=id THEN @row_number+1 ELSE 1 END AS row_number
+             ,@dag_run:=id AS run_id,
+             dag_id, execution_date, start_date, end_date, task_id, state
+            FROM 
+              (
+                  SELECT d.id, d.dag_id, d.execution_date, t.task_id, t.start_date, t.end_date, d.state
+                  FROM dag_run d
+                  LEFT JOIN task_instance t
+                    ON d.dag_id=t.dag_id
+                    AND d.execution_date=t.execution_date
+                  ORDER BY d.dag_id ASC, d.execution_date ASC, t.end_date IS NULL DESC, t.end_date DESC
+              ) dag_tasks
+        ) dag_tasks_numbered
+        WHERE row_number=1
+        ;
+        """
+        result = session.execute(query2,
+            {'min_date': first_day.isoformat(), 'today': date.today().isoformat()}
         )
         # print('RESULT FROM QUERY:')
         records = result.fetchall()
