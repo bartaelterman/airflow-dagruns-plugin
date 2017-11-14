@@ -11,7 +11,7 @@ var dagChart = (function () {
     var dimensions = {};       // crossfilter dimensions
     var from = moment();       // minimum datetime. Initialize as empty moment object
     var height;                // total height of the chart (and the entire svg element)
-    var maxHeight = 600;       // Maximum height of the chart
+    var maxHeight = 8000;       // Maximum height of the chart
     var padding = 20;          // left side padding
     var rightMargin = 130;     // space for the DAG ids on the right side of the cart
     var svg;
@@ -186,7 +186,7 @@ var dagChart = (function () {
     function setVisibleDAGs() {
         visibleDAGs = _.map(
             _.groupBy(
-                dimensions["dagids"].top(20),
+                dimensions["dagids"].top(crossf.size()),
                 function (x) {return x.dagId;}
             ),
             function (dagruns, dagId) {
@@ -288,7 +288,7 @@ var dagChart = (function () {
 
         bars.append("rect")
             .attr("width", function(d) { return xScale(new Date(minStart.valueOf() + d.endDate.valueOf() - d.startDate.valueOf())); })
-            .attr("height", 20)
+            .attr("height", barheight)
             .attr("class", function (d) {return d.state;})
             .on("mouseover", function () {
                 d3.select(this).attr("fill-opacity", 0.4);
@@ -300,7 +300,7 @@ var dagChart = (function () {
                 var rect = d3.select(this);
 
                 var url = '/admin/airflow/gantt?dag_id=' + d.dagId + '&execution_date=' + d.executionDateStr;
-                console.log(url)
+                console.log(url);
                 window.location.href = url;
             })
         ;
@@ -330,10 +330,10 @@ var dagChart = (function () {
     }
 
     function init() {
+        // data = getDummyData();
         console.log(data);  // should be globally defined in the template
         parseDates();
         svg = d3.select("#chart");
-        // var data = getDummyData();
         crossf = toCrossfilter(data);
         createDimensions(crossf);
         initDateRange();
