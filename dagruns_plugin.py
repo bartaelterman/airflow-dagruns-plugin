@@ -21,7 +21,7 @@ class DagRunsView(BaseView):
     @expose('/')
     def test(self):
         today = date.today()
-        first_day = today - timedelta(days=3)
+        first_day = today - timedelta(days=5)
         session = settings.Session()
         # this query should work for both postgres and mysql
         # Although it should be noted that for postgres you should be able to use a window function which is much cleaner
@@ -89,18 +89,21 @@ class DagRunsView(BaseView):
             {'min_date': first_day.isoformat(), 'today': date.today().isoformat()}
         )
         # print('RESULT FROM QUERY:')
-        records = result.fetchall()
-        # pprint.pprint(records)
-        dag_runs = [
-             {
-                'dagId': run['dag_id'],
-                'startDate': run['start_date'].isoformat('T') + 'Z',
-                'endDate': run['end_date'].isoformat('T') + 'Z' if run['end_date'] else datetime.now().isoformat('T') + 'Z',
-                'executionDate': run['execution_date'].isoformat() + '.000Z',
-                'executionDateStr': run['execution_date'].strftime("%Y-%m-%d %H:%M:%S"),
-                'schedule': 'unknown',  # TODO: how can we get the scheduled interval
-                'state': run['state']
-            } for run in records]
+        if result.rowcount > 0:
+            records = result.fetchall()
+            # pprint.pprint(records)
+            dag_runs = [
+                 {
+                    'dagId': run['dag_id'],
+                    'startDate': run['start_date'].isoformat('T') + 'Z',
+                    'endDate': run['end_date'].isoformat('T') + 'Z' if run['end_date'] else datetime.now().isoformat('T') + 'Z',
+                    'executionDate': run['execution_date'].isoformat() + '.000Z',
+                    'executionDateStr': run['execution_date'].strftime("%Y-%m-%d %H:%M:%S"),
+                    'schedule': 'unknown',  # TODO: how can we get the scheduled interval
+                    'state': run['state']
+                } for run in records]
+        else:
+            dag_runs = []
 
         return self.render("dag_runs.html", dag_runs=json.dumps(dag_runs))
 
