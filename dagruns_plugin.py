@@ -78,6 +78,7 @@ class DagRunsView(BaseView):
                   LEFT JOIN task_instance t
                     ON d.dag_id=t.dag_id
                     AND d.execution_date=t.execution_date
+                  WHERE d.execution_date > :min_date
                   ORDER BY d.dag_id ASC, d.execution_date ASC, t.end_date IS NULL DESC, t.end_date DESC
               ) dag_tasks
         ) dag_tasks_numbered
