@@ -25,7 +25,7 @@ class DagRunsView(BaseView):
         #     request_data = request.get_json(force=True).get('uri')
 
         today = date.today()
-        first_day = today - timedelta(days=8)
+        first_day = today - timedelta(days=14)
         session = settings.Session()
 
         # this query only works on MySQL as it uses MySQL variables.
