@@ -1,5 +1,5 @@
 import json
-import pickle
+import logging
 import pprint
 from airflow import settings
 from airflow.plugins_manager import AirflowPlugin
@@ -21,49 +21,13 @@ class DagRunsView(BaseView):
     @expose('/')
     def test(self):
         today = date.today()
-        first_day = today - timedelta(days=5)
+        first_day = today - timedelta(days=8)
         session = settings.Session()
-        # this query should work for both postgres and mysql
-        # Although it should be noted that for postgres you should be able to use a window function which is much cleaner
-        query = '''
-                SELECT
-                  dag_run.dag_id as dag_id
-                  , dag_pickle.pickle as dag_pickle
-                  , dag_run.execution_date as execution_date
-                  , dag_run.start_date as start_date
-                  , last_tasks.end_date as end_date
-                  , dag_run.state as state
-                FROM dag_run
-                LEFT JOIN
 
-                ( SELECT a.dag_id dag_id, a.execution_date, a.end_date as end_date, a.task_id as task_id
-                FROM (
-                    SELECT dag_id, execution_date, COALESCE(end_date, date(:today)) as end_date, task_id FROM task_instance
-                ) as a
-                LEFT JOIN
-                
-                  (
-                    SELECT dag_id, execution_date, COALESCE(end_date, date(:today)) as end_date, task_id FROM task_instance
-                  ) as b
-                  ON a.dag_id=b.dag_id
-                  AND a.execution_date = b.execution_date
-                  AND a.end_date < b.end_date
-                WHERE b.task_id IS NULL) as last_tasks
-                
-                  ON last_tasks.dag_id=dag_run.dag_id
-                  AND last_tasks.execution_date=dag_run.execution_date
-                
-                LEFT JOIN dag
-                  ON dag.dag_id = dag_run.dag_id
-                
-                LEFT JOIN dag_pickle
-                  ON dag.pickle_id=dag_pickle.id
+        # this query only works on MySQL as it uses MySQL variables.
+        # For postgres you should be able to use a window function which is much cleaner
 
-                WHERE dag_run.execution_date > :min_date
-                GROUP BY dag_run.dag_id, dag_pickle.pickle, dag_run.execution_date, dag_run.start_date, last_tasks.end_date, dag_run.state
-            '''
-
-        query2 = """
+        mysql_query = """
         SET @row_number:=0;
         SET @dag_run:='';
         SELECT * FROM
@@ -85,13 +49,13 @@ class DagRunsView(BaseView):
         WHERE row_number=1
         ;
         """
-        result = session.execute(query2,
+        result = session.execute(mysql_query,
             {'min_date': first_day.isoformat(), 'today': date.today().isoformat()}
         )
-        # print('RESULT FROM QUERY:')
+        logging.warning('RESULT FROM QUERY:')
         if result.rowcount > 0:
             records = result.fetchall()
-            # pprint.pprint(records)
+            logging.warning(records)
             dag_runs = [
                  {
                     'dagId': run['dag_id'],
@@ -103,6 +67,7 @@ class DagRunsView(BaseView):
                     'state': run['state']
                 } for run in records]
         else:
+            logging.warning('No records found')
             dag_runs = []
 
         return self.render("dag_runs.html", dag_runs=json.dumps(dag_runs))
