@@ -49,6 +49,31 @@ var dagChart = (function () {
         $("#until-datetime > input").val(moment().format("YYYY-MM-DD HH:mm:ss"));
     }
 
+    function formatDuration(ms) {
+        var formattedStr = "";
+        var hours = Math.floor(ms / (1000 * 60 * 60));
+        var timeLeft = ms % (1000 * 60 * 60);
+        if (hours > 0) {
+            formattedStr += hours + " hours";
+            if (timeLeft > 0) {
+                formattedStr += ", "
+            }
+        }
+        var minutes = Math.floor(timeLeft / (1000 * 60));
+        timeLeft = timeLeft % (1000 * 60);
+        if (minutes > 0) {
+            formattedStr += minutes + " minutes";
+            if (timeLeft > 0) {
+                formattedStr += ", "
+            }
+        }
+        var seconds = Math.floor(timeLeft * 10) / 10000;
+        if (seconds > 0) {
+            formattedStr += seconds + " seconds"
+        }
+        return formattedStr;
+    }
+
 
     // Add events to some UI elements
     function addEvents() {
@@ -273,6 +298,11 @@ var dagChart = (function () {
             .style("stroke-dasharray", "5");
 
 
+        // Get tooltip
+
+        var tooltip = d3.select("#tooltip");
+
+
         // Create bars
 
         var bars = svg.selectAll(".bar")
@@ -290,11 +320,22 @@ var dagChart = (function () {
             .attr("width", function(d) { return xScale(new Date(minStart.valueOf() + d.endDate.valueOf() - d.startDate.valueOf())); })
             .attr("height", barheight)
             .attr("class", function (d) {return d.state;})
-            .on("mouseover", function () {
+            .on("mouseover", function (d) {
                 d3.select(this).attr("fill-opacity", 0.4);
+                tooltip.transition().duration(200)
+                    .style("opacity", .9);
+                tooltip.html("<span><b>" + d.dagId + " - " +  moment(d.startDate).fromNow() +
+                        "</b> <br/>start: " + moment(d.startDate).format("D MMM  HH:mm") +
+                        "<br/>end: " + moment(d.endDate).format("D MMM HH:mm") +
+                        "<br/>duration: <br/>" + formatDuration(d.endDate - d.startDate) + "</span>"
+                    )
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 105) + "px");
             })
             .on("mouseout", function () {
                 d3.select(this).attr("fill-opacity", 1);
+                tooltip.transition().duration(300)
+                    .style("opacity", 0);
             })
             .on("click", function (d) {
                 var rect = d3.select(this);

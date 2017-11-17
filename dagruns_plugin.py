@@ -38,7 +38,7 @@ class DagRunsView(BaseView):
             SELECT @row_number:=CASE WHEN @dag_run=id THEN @row_number+1 ELSE 1 END AS row_number
              ,@dag_run:=id AS run_id,
              dag_id, execution_date, start_date, end_date, task_id, state
-            FROM 
+            FROM
               (
                   SELECT d.id, d.dag_id, d.execution_date, t.task_id, d.start_date, t.end_date, d.state
                   FROM dag_run d

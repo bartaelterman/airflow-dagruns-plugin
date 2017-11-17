@@ -12,6 +12,27 @@
         fill: #00FF00;
     }
 
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    display:flex;
+    align-items: center; /* Vertical center alignment */
+    justify-content: center;
+    width: 240px;
+    height: 110px;
+    padding: 2px;
+    background: white;
+    border: 1px;
+    border-style: solid;
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+    /*div.tooltip span {*/
+      /*display: inline-block;*/
+      /*vertical-align: middle;*/
+    /*}*/
+
 svg {
     background-color: white;
 }
